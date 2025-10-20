@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% if not match %}
+  <div class="alert alert-danger">Match introuvable.</div>
+{% else %}
+
+  {# Entête #}
+  <div class="mb-3">
+    {% set home_iso = iso2_for_team(home_name) %}
+    {% set away_iso = iso2_for_team(away_name) %}
+    <h2 class="mb-1">
+      {% if home_iso %}<span class="fi fi-{{ home_iso }}"></span>{% endif %}
+      {{ home_name }}
+      <span class="fw-bold mx-2">vs</span>
+      {% if away_iso %}<span class="fi fi-{{ away_iso }}"></span>{% endif %}
+      {{ away_name }}
+    </h2>
+    <div class="text-muted">
+      <span class="me-2">{{ match.kick_off.strftime('%d/%m/%Y %H:%M') if match.kick_off else '' }}</span>
+      {% if match.stadium %}<span>• {{ match.stadium }}</span>{% endif %}
+    </div>
+    <div class="display-6 my-3 text-center">
+      {{ match.home_score }} – {{ match.away_score }}
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-12 col-lg-8">
+      <div class="card bg-secondary text-white mb-4">
+        <div class="card-body">
+          <h3 class="h5 mb-3">Compositions</h3>
+
+          <div class="row">
+            <div class="col-12 col-md-6">
+              <h4 class="h6">{{ home_name }}</h4>
+              <div class="mb-2 fw-bold">Titularisation</div>
+              <ul class="list-group mb-3">
+                {% for p in home_lineup if p.is_starter %}
+                <li class="list-group-item bg-dark text-white">
+                  {% if p.jersey_number %}<span class="badge bg-light text-dark me-2">#{{ p.jersey_number }}</span>{% endif %}
+                  {{ p.player_name }} <span class="text-light text-opacity-75 small">({{ p.position or '—' }})</span>
+                </li>
+                {% endfor %}
+                {% if not home_lineup | selectattr('is_starter') | list %}
+                <li class="list-group-item bg-warning text-dark">Compo non disponible.</li>
+                {% endif %}
+              </ul>
+
+              <div class="mb-2 fw-bold">Remplaçants</div>
+              <ul class="list-group">
+                {% for p in home_lineup if not p.is_starter %}
+                <li class="list-group-item bg-dark text-white">
+                  {% if p.jersey_number %}<span class="badge bg-light text-dark me-2">#{{ p.jersey_number }}</span>{% endif %}
+                  {{ p.player_name }} <span class="text-light text-opacity-75 small">({{ p.position or '—' }})</span>
+                </li>
+                {% endfor %}
+                {% if not home_lineup | rejectattr('is_starter') | list %}
+                <li class="list-group-item bg-dark text-white">—</li>
+                {% endif %}
+              </ul>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <h4 class="h6">{{ away_name }}</h4>
+              <div class="mb-2 fw-bold">Titularisation</div>
+              <ul class="list-group mb-3">
+                {% for p in away_lineup if p.is_starter %}
+                <li class="list-group-item bg-dark text-white">
+                  {% if p.jersey_number %}<span class="badge bg-light text-dark me-2">#{{ p.jersey_number }}</span>{% endif %}
+                  {{ p.player_name }} <span class="text-light text-opacity-75 small">({{ p.position or '—' }})</span>
+                </li>
+                {% endfor %}
+                {% if not away_lineup | selectattr('is_starter') | list %}
+                <li class="list-group-item bg-warning text-dark">Compo non disponible.</li>
+                {% endif %}
+              </ul>
+
+              <div class="mb-2 fw-bold">Remplaçants</div>
+              <ul class="list-group">
+                {% for p in away_lineup if not p.is_starter %}
+                <li class="list-group-item bg-dark text-white">
+                  {% if p.jersey_number %}<span class="badge bg-light text-dark me-2">#{{ p.jersey_number }}</span>{% endif %}
+                  {{ p.player_name }} <span class="text-light text-opacity-75 small">({{ p.position or '—' }})</span>
+                </li>
+                {% endfor %}
+                {% if not away_lineup | rejectattr('is_starter') | list %}
+                <li class="list-group-item bg-dark text-white">—</li>
+                {% endif %}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Timeline -->
+      <div class="card bg-secondary text-white">
+        <div class="card-body">
+          <h3 class="h5 mb-3">Timeline</h3>
+          <ul class="list-group">
+            {% for e in events %}
+            <li class="list-group-item bg-dark text-white">
+              <strong>[{{ e.minute if e.minute is not none else '–' }}']</strong>
+              {{ e.type }}
+              {% if e.type == 'Shot' and e.xG is not none %}
+                <span class="badge bg-info ms-2">xG: {{ '%.2f'|format(e.xG) }}</span>
+              {% endif %}
+              {% if e.outcome %}<span class="badge bg-light text-dark ms-2">{{ e.outcome }}</span>{% endif %}
+            </li>
+            {% endfor %}
+            {% if not events or events|length == 0 %}
+              <li class="list-group-item bg-warning text-dark">Aucun événement pour ce match.</li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Autres matchs -->
+    <div class="col-12 col-lg-4">
+      <div class="card bg-secondary text-white">
+        <div class="card-body">
+          <h3 class="h5 mb-3">Autres matchs (même compétition)</h3>
+          <div class="list-group">
+            {% for m in related_matches %}
+            <a class="list-group-item list-group-item-action bg-dark text-white" href="/match/{{ m.id }}">
+              <div class="d-flex justify-content-between">
+                <div class="small text-light text-opacity-75">{{ m.kick_off.strftime('%d/%m/%Y') if m.kick_off else '' }}</div>
+                <div class="small">{{ m.home_score }}–{{ m.away_score }}</div>
+              </div>
+              <div class="small">
+                {{ teams.get(m.home_team_id, m.home_team_id) }} vs {{ teams.get(m.away_team_id, m.away_team_id) }}
+              </div>
+            </a>
+            {% endfor %}
+            {% if not related_matches or related_matches|length == 0 %}
+              <div class="list-group-item bg-dark text-white">—</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+{% endif %}
+
+{% endblock %}

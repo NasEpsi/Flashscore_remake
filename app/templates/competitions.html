@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2 class="mb-4">Compétitions</h2>
+
+<h3 class="h5 mt-3">5 grands championnats</h3>
+<div class="row g-3">
+  {% for c in top_leagues %}
+  <div class="col-12 col-md-6 col-lg-4">
+    <div class="card bg-secondary text-white position-relative">
+      <div class="card-body">
+        <h5 class="card-title mb-1">{{ c.name }}</h5>
+        <p class="card-text small text-light text-opacity-75 mb-2">
+          {{ counts.get(c.id, 0) }} matchs dans la base
+        </p>
+
+        <!-- Années -->
+        <div class="d-flex flex-wrap gap-2 mb-2">
+          {% for s in seasons_for_comp(c.id) %}
+            <a class="btn btn-sm btn-outline-light"
+               href="/matches?competition_id={{ c.id }}&season_id={{ s.id }}">
+               {{ s.season_name }}
+            </a>
+          {% endfor %}
+        </div>
+
+        <a class="stretched-link" href="/matches?competition_id={{ c.id }}"></a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<h3 class="h5 mt-4">Grandes compétitions internationales</h3>
+<div class="row g-3">
+  {% for c in top_international %}
+  <div class="col-12 col-md-6 col-lg-4">
+    <div class="card bg-secondary text-white position-relative">
+      <div class="card-body">
+        <h5 class="card-title mb-1">{{ c.name }}</h5>
+        <p class="card-text small text-light text-opacity-75 mb-2">
+          {{ counts.get(c.id, 0) }} matchs dans la base
+        </p>
+
+        <div class="d-flex flex-wrap gap-2 mb-2">
+          {% for s in seasons_for_comp(c.id) %}
+            <a class="btn btn-sm btn-outline-light"
+               href="/matches?competition_id={{ c.id }}&season_id={{ s.id }}">
+               {{ s.season_name }}
+            </a>
+          {% endfor %}
+        </div>
+
+        <a class="stretched-link" href="/matches?competition_id={{ c.id }}"></a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% if (top_leagues|length == 0) and (top_international|length == 0) %}
+<div class="alert alert-warning mt-4">Aucune compétition trouvée. Avez-vous exécuté <code>python -m etl.run_all</code> ?</div>
+{% endif %}
+
+{% endblock %}

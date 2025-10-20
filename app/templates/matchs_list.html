@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2 class="mb-3">
+  {% if selected_comp %}{{ selected_comp.name }} —{% endif %} Matches
+</h2>
+
+<form class="row g-2 align-items-end mb-3" method="get" action="/matches">
+  <div class="col-auto">
+    <label class="form-label">Saison</label>
+    <select class="form-select" name="season_id">
+      <option value="">Toutes</option>
+      {% for s in selected_seasons %}
+        <option value="{{ s.id }}" {% if season_id and s.id==season_id %}selected{% endif %}>{{ s.season_name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-auto">
+    <button class="btn btn-primary">Filtrer</button>
+  </div>
+  <div class="col-auto">
+    <a class="btn btn-outline-light" href="/competitions">Choisir via liste</a>
+  </div>
+</form>
+
+<div class="row g-3">
+  {% for m in matches %}
+  <div class="col-12 col-md-6 col-lg-4">
+    <div class="card bg-secondary text-white">
+      <div class="card-body d-flex flex-column">
+        {% set home = teams.get(m.home_team_id, m.home_team_id) %}
+        {% set away = teams.get(m.away_team_id, m.away_team_id) %}
+        {% set h_iso = iso2_for_team(home) %}
+        {% set a_iso = iso2_for_team(away) %}
+
+        <h5 class="card-title mb-2">
+        {% if h_iso %}<span class="fi fi-{{ h_iso }}"></span>{% endif %}
+        {{ home }}
+        <span class="fw-bold mx-1">vs</span>
+        {% if a_iso %}<span class="fi fi-{{ a_iso }}"></span>{% endif %}
+        {{ away }}
+        </h5>
+        <div class="small text-light text-opacity-75">{{ m.kick_off.strftime('%d/%m/%Y %H:%M') if m.kick_off else '' }}</div>
+        <div class="fs-5 my-2 text-center">{{ m.home_score }} – {{ m.away_score }}</div>
+        <a class="btn btn-outline-light mt-auto" href="/match/{{ m.id }}">Voir le détail</a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% if not matches or matches|length == 0 %}
+<div class="alert alert-warning mt-4">Aucun match trouvé pour ce filtre.</div>
+{% endif %}
+
+{% endblock %}
